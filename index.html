@@ -1,10 +1,32 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <title>PhotoBooth</title>
+    <script>
+      // Function to set zoom level based on screen width
+      function setZoomLevel() {
+        const isMobile = window.innerWidth <= 768; // Adjust this breakpoint as needed
+        if (!isMobile) {
+          document.body.style.zoom = "150%"; // Apply 150% zoom for desktop
+        }
+      }
+
+      // Set zoom level on page load
+      window.addEventListener("load", setZoomLevel);
+
+      // Update zoom level on window resize
+      window.addEventListener("resize", setZoomLevel);
+    </script>
   </head>
   <body>
     <div id="root"></div>

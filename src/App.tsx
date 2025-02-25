@@ -1,10 +1,12 @@
+import React from "react";
+import PhotoBooth from "./components/PhotoBooth";
 
-const App = () => {
+const App: React.FC = () => {
   return (
-    <div>
-        <h1 className="text-5xl text-red-500">TEST</h1>
+    <div className="App">
+      <PhotoBooth />
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
