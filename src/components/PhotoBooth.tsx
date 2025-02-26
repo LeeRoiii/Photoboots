@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
-import { Camera, Download, RefreshCw, Sparkles, X, Trash2 } from "lucide-react";
+import { Camera, Download, RefreshCw, Sparkles, X, Trash2, ZoomIn, ZoomOut, Edit } from "lucide-react";
 import { toast, Toaster } from "react-hot-toast";
 
 const PhotoBooth: React.FC = () => {
@@ -12,6 +12,9 @@ const PhotoBooth: React.FC = () => {
   const [numberOfShots, setNumberOfShots] = useState<number>(1);
   const [isCapturing, setIsCapturing] = useState<boolean>(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [borderText, setBorderText] = useState<string>("Instax Photo"); // Text for the border
+  const [isEditingBorder, setIsEditingBorder] = useState<boolean>(false); // Edit mode for border text
 
   // Load images from localStorage on component mount
   useEffect(() => {
@@ -25,6 +28,16 @@ const PhotoBooth: React.FC = () => {
   useEffect(() => {
     localStorage.setItem("capturedImages", JSON.stringify(images));
   }, [images]);
+
+  // Zoom in function
+  const handleZoomIn = (): void => {
+    setZoomLevel((prev) => Math.min(prev + 0.25, 3)); // Limit zoom to 3x
+  };
+
+  // Zoom out function
+  const handleZoomOut = (): void => {
+    setZoomLevel((prev) => Math.max(prev - 0.25, 1)); // Limit zoom to 1x
+  };
 
   const capture = async (): Promise<void> => {
     if (webcamRef.current && !isCapturing) {
@@ -96,6 +109,33 @@ const PhotoBooth: React.FC = () => {
     toast.success("Image deleted!");
   };
 
+  // Instax Border Component
+  const InstaxBorder: React.FC<{ image: string }> = ({ image }) => {
+    return (
+      <div className="relative w-64 h-80 bg-white rounded-lg shadow-lg p-4 flex flex-col items-center justify-center">
+        {/* Image */}
+        <img
+          src={image}
+          alt="Captured"
+          className="w-full h-48 object-cover rounded-lg"
+        />
+        {/* Border Text */}
+        <div className="mt-4 text-center text-gray-800 font-semibold">
+          {borderText}
+        </div>
+        {/* Edit Button */}
+        <button
+          onClick={() => setIsEditingBorder(true)}
+          className="absolute top-2 right-2 p-1 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors"
+          title="Edit Border Text"
+          aria-label="Edit Border Text"
+        >
+          <Edit size={16} className="text-white" />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col items-center p-4 sm:p-6 bg-gradient-to-br from-gray-900 to-black min-h-screen text-white font-poppins">
       {/* Toast Notifications */}
@@ -108,12 +148,14 @@ const PhotoBooth: React.FC = () => {
             {/* Flash effect overlay */}
             <div id="camera-flash" className="absolute inset-0 bg-white opacity-0 transition-opacity z-20 pointer-events-none"></div>
 
+            {/* Webcam with zoom applied */}
             <Webcam
               ref={webcamRef}
               audio={false}
               screenshotFormat="image/png"
               videoConstraints={{ facingMode: cameraFacing }}
               className="w-full h-full object-cover"
+              style={{ transform: `scale(${zoomLevel})`, transformOrigin: "center" }}
             />
 
             {countdown !== null && (
@@ -145,6 +187,24 @@ const PhotoBooth: React.FC = () => {
                 aria-label="Toggle Flash"
               >
                 <Sparkles size={24} className={flashMode ? "text-white" : "text-gray-300"} />
+              </button>
+              {/* Zoom In Button */}
+              <button
+                onClick={handleZoomIn}
+                className="p-3 rounded-full bg-gray-800 hover:bg-gray-700 transition-all duration-300 hover:scale-110"
+                title="Zoom In"
+                aria-label="Zoom In"
+              >
+                <ZoomIn size={24} className="text-white" />
+              </button>
+              {/* Zoom Out Button */}
+              <button
+                onClick={handleZoomOut}
+                className="p-3 rounded-full bg-gray-800 hover:bg-gray-700 transition-all duration-300 hover:scale-110"
+                title="Zoom Out"
+                aria-label="Zoom Out"
+              >
+                <ZoomOut size={24} className="text-white" />
               </button>
             </div>
             <button
@@ -193,11 +253,7 @@ const PhotoBooth: React.FC = () => {
                 onClick={() => handleSelectImage(img)}
                 aria-label="View Image"
               >
-                <img
-                  src={img}
-                  alt={`Captured ${index}`}
-                  className="w-full h-32 sm:h-40 object-cover rounded-lg shadow-lg"
-                />
+                <InstaxBorder image={img} />
                 <div className="absolute bottom-2 right-2 flex gap-2">
                   <button
                     onClick={(e) => {
@@ -232,11 +288,7 @@ const PhotoBooth: React.FC = () => {
           onClick={handleClosePreview}
         >
           <div className="relative max-w-4xl max-h-[80vh] w-full" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={selectedImage}
-              alt="Selected Preview"
-              className="w-full h-full object-contain rounded-lg shadow-2xl"
-            />
+            <InstaxBorder image={selectedImage} />
             <button
               onClick={handleClosePreview}
               className="absolute top-4 right-4 p-3 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors hover:scale-110"
@@ -245,6 +297,36 @@ const PhotoBooth: React.FC = () => {
             >
               <X size={20} className="text-white" />
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Border Text Modal */}
+      {isEditingBorder && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full">
+            <h2 className="text-xl font-semibold text-white mb-4">Edit Border Text</h2>
+            <input
+              type="text"
+              value={borderText}
+              onChange={(e) => setBorderText(e.target.value)}
+              className="w-full p-2 rounded-lg bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter border text"
+            />
+            <div className="flex justify-end gap-4 mt-6">
+              <button
+                onClick={() => setIsEditingBorder(false)}
+                className="px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setIsEditingBorder(false)}
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 transition-colors"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       )}
